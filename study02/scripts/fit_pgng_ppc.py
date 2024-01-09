@@ -13,6 +13,8 @@ ROOT_DIR = dirname(dirname(os.path.realpath(__file__)))
 ## I/O parameters.
 stan_model = sys.argv[1]
 session = sys.argv[2]
+subs = int(sys.argv[3])
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ### Load and prepare data.
@@ -20,6 +22,10 @@ session = sys.argv[2]
 
 ## Load data.
 data = read_csv(os.path.join(ROOT_DIR, 'data', session, 'pgng.csv'))
+
+unique_subjects = data['subject'].unique()[:subs]
+data = data[data['subject'].isin(unique_subjects)]
+
 
 ## Restrict participants.
 if session == 's1':

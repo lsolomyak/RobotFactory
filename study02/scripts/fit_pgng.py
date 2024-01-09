@@ -10,12 +10,14 @@ ROOT_DIR = dirname(dirname(os.path.realpath(__file__)))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 ## I/O parameters.
-stan_model = sys.argv[1]
 session = sys.argv[2]
+stan_models = sys.argv[1].split(',')
+subs = int(sys.argv[3])
+
 
 ## Sampling parameters.
 iter_warmup   = 5000
-iter_sampling = 1250
+iter_sampling = 5250
 chains = 4
 thin = 1
 parallel_chains = 4
@@ -33,8 +35,22 @@ if session == 's1':
     data = data[data.subject.isin(reject.query('reject==0').subject)].reset_index(drop=True)
 
 ## Format data.
+unique_subjects = data['subject'].unique()[:subs]
+
+
 data['valence'] = data.valence.replace({'win': 1, 'lose': 0})
 data['outcome'] = np.where(data.valence, data.outcome > 5, data.outcome > -5).astype(int)
+
+
+grouped_data = data.groupby('subject').first().reset_index()
+
+# Calculate z-score for age in the grouped data
+age_zscore = (grouped_data['age'] - grouped_data['age'].mean()) / grouped_data['age'].std()
+grouped_data['age_zscore']=age_zscore
+grouped_data['age_squared']=grouped_data['age_zscore'] ** 2
+age_squared_zscore = (grouped_data['age_squared'] - grouped_data['age_squared'].mean()) / grouped_data['age_squared'].std()
+print(np.corrcoef(age_squared_zscore,age_zscore))
+
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ### Assemble data for Stan.
@@ -56,13 +72,15 @@ V = data.valence.values.astype(int)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
 ## Assemble data.
-dd = dict(N=N, J=J, K=K, M=M, Y=Y, R=R, V=V)
+dd = dict(N=N, J=J, K=K, M=M, Y=Y, R=R, V=V, age_squared_zscored=age_squared_zscore,age_zscored=age_zscore)
 
 ## Load StanModel
-StanModel = CmdStanModel(stan_file=os.path.join(ROOT_DIR, 'stan_models', f'{stan_model}.stan'))
+for stan_model in stan_models:
 
-## Fit Stan model.
-StanFit = StanModel.sample(data=dd, chains=chains, iter_warmup=iter_warmup, iter_sampling=iter_sampling, thin=thin, parallel_chains=parallel_chains, seed=0, show_progress=True)
+    StanModel = CmdStanModel(stan_file=os.path.join(ROOT_DIR, 'stan_models', f'{stan_model}.stan'))
+
+    ## Fit Stan model.
+    StanFit = StanModel.sample(data=dd, chains=chains, iter_warmup=iter_warmup, iter_sampling=iter_sampling, thin=thin, parallel_chains=parallel_chains, seed=0, show_progress=True)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ### Save samples.
