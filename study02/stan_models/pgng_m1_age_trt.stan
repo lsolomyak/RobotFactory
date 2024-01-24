@@ -37,22 +37,14 @@ transformed parameters {
 
     array[2] vector[NJ]  b1;                // Inverse temperature (positive valence)
     array[2] vector[NJ]  a1;                // Learning rate (positive valence)
-    matrix<lower=0>[4,4] sigma_pr; 
+    matrix<lower=0>[4,2] sigma_pr; 
     matrix[4,NJ]  theta_c_pr2;               // Standardized subject-level effects (common)
   //  matrix[4,NJ]  theta_d_pr2;
    sigma_pr[1,1] = 1;
    sigma_pr[1,2] = 1;
    sigma_pr[2,1] = 1;
    sigma_pr[2,2] = 1;
-   sigma_pr[1,3] = 1;
-   sigma_pr[1,4] = 1;
-   sigma_pr[2,3] = 1;
-   sigma_pr[2,4] = 1;
-   sigma_pr[3,1] = 1;
-   sigma_pr[4,1] = 1;
-   sigma_pr[3,2]= 1;
-   sigma_pr[4,2] = 1;
-   sigma_pr[3:4,3:4] = sigma;
+   sigma_pr[3:4, ] = sigma;
    theta_c_pr2[1,] = to_row_vector(age_zscore);
    theta_c_pr2[2,] = to_row_vector(age_squared_zscore);
    theta_c_pr2[3:4,] = theta_c_pr;// Learning rate (positive valence)
@@ -62,8 +54,8 @@ transformed parameters {
     {
     
     // Rotate random effects
-    matrix[NJ,4] theta_c = transpose(diag_pre_multiply(sigma_pr[,3],L) * theta_c_pr2);
-    matrix[NJ,2] theta_d = transpose(diag_pre_multiply(sigma_pr[3:4,4], theta_d_pr));
+    matrix[NJ,4] theta_c = transpose(diag_pre_multiply(sigma_pr[,1],L) * theta_c_pr2);
+    matrix[NJ,2] theta_d = transpose(diag_pre_multiply(sigma[,2], theta_d_pr));
     
     // Construct random effects
     b1[1] = (theta_mu[1,1] + theta_c[,3] - theta_d[,1]) * 10;

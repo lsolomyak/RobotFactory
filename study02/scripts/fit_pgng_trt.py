@@ -15,8 +15,8 @@ pairing = int(sys.argv[2])
 subs = int(sys.argv[3])
 print(subs)
 ## Sampling parameters.
-iter_warmup   = 5000
-iter_sampling = 5000
+iter_warmup   = 6000
+iter_sampling = 3000
 chains = 4
 thin = 1
 parallel_chains = 4
@@ -39,11 +39,20 @@ elif pairing == 3:
 ## Merge datasets.
 data = concat([a, b])
 
+unique_subjects = data['subject'].unique()
 unique_subjects = data['subject'].unique()[:subs]
+
 data = data[data['subject'].isin(unique_subjects)]
 
 ## Restrict to participants with both sessions.
 data = data.groupby('subject').filter(lambda x: x.session.nunique() == 2)
+
+reject = read_csv(os.path.join(ROOT_DIR, 'data', 's1', 'reject.csv'))
+reject2 = read_csv(os.path.join(ROOT_DIR, 'data', 's2', 'reject.csv'))
+
+data = data[data.subject.isin(reject.query('reject==0').subject)].reset_index(drop=True)
+data = data[data.subject.isin(reject2.query('reject==0').subject)].reset_index(drop=True)
+
 
 ## Format data.
 data['valence'] = data.valence.replace({'win': 1, 'lose': 0})
@@ -89,7 +98,7 @@ dd = dict(N=N, J=J, K=K, M=M, Y=Y, R=R, V=V,NJ=NJ, age_squared_zscore=age_square
 StanModel = CmdStanModel(stan_file=os.path.join(ROOT_DIR, 'stan_models', f'{stan_model}.stan'))
 
 ## Fit Stan model.
-StanFit = StanModel.sample(data=dd, chains=chains, iter_warmup=iter_warmup, iter_sampling=iter_sampling, thin=thin, parallel_chains=parallel_chains,adapt_delta=.85, seed=0, show_progress=True)
+StanFit = StanModel.sample(data=dd, chains=chains, iter_warmup=iter_warmup, iter_sampling=iter_sampling, thin=thin, parallel_chains=parallel_chains,adapt_delta=.9,seed=0, show_progress=True)
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 ### Save samples.

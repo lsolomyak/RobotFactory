@@ -30,7 +30,7 @@ parallel_chains = 4
 data = read_csv(os.path.join(ROOT_DIR, 'data', session, 'pgng.csv'))
 
 ## Restrict participants.
-if session == 's1':
+#if session == 's1':
     reject = read_csv(os.path.join(ROOT_DIR, 'data', session, 'reject.csv'))
     data = data[data.subject.isin(reject.query('reject==0').subject)].reset_index(drop=True)
 
