@@ -16,7 +16,7 @@ subs = int(sys.argv[3])
 print(subs)
 ## Sampling parameters.
 iter_warmup   = 6000
-iter_sampling = 3000
+iter_sampling = 7000
 chains = 4
 thin = 1
 parallel_chains = 4
@@ -39,7 +39,7 @@ elif pairing == 3:
 ## Merge datasets.
 data = concat([a, b])
 
-unique_subjects = data['subject'].unique()
+#unique_subjects = data['subject'].unique()
 unique_subjects = data['subject'].unique()[:subs]
 
 data = data[data['subject'].isin(unique_subjects)]
